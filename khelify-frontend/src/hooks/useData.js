@@ -10,11 +10,15 @@ export function useLiveMatches() {
 
     queryFn: async () => {
       const res = await cricketApi.getLive();
-      return res?.matches || [];
+
+      // ✅ FIX: Ensure correct structure
+      if (!res || !res.success) return [];
+
+      return res.matches || [];
     },
 
-    refetchInterval: 120_000, // 🔥 reduced API spam (2 min)
-    staleTime: 110_000,
+    refetchInterval: 120000,
+    staleTime: 110000,
   });
 }
 
@@ -22,25 +26,25 @@ export function useLiveMatches() {
 // MATCH (LOCAL FROM LIVE DATA)
 // ===============================
 export function useMatch(id) {
-  const { data: matches = [] } = useLiveMatches();
+  const { data: matches = [], isLoading, isError } = useLiveMatches();
+
+  const match = matches.find(m => String(m.id) === String(id));
 
   return {
-    data: {
-      match: matches.find(m => m.id === id)
-    },
-    isLoading: false,
-    isError: false
+    data: { match },
+    isLoading,
+    isError: isError || !match
   };
 }
 
 // ===============================
-// PLAYERS (UNCHANGED)
+// PLAYER
 // ===============================
 export function usePlayer(id) {
   return useQuery({
     queryKey: ['player', id],
     queryFn: () => cricketApi.getPlayer(id),
     enabled: !!id,
-    staleTime: 300_000,
+    staleTime: 300000,
   });
 }
