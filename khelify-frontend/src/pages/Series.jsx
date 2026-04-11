@@ -2,7 +2,9 @@ import { Link } from 'react-router-dom';
 import './Series.css';
 
 export default function Series() {
-  const { data: series = [], isLoading } = useSeries();
+  // ❌ Removed broken hook
+  const series = [];
+  const isLoading = false;
 
   return (
     <div className="series-page fade-up">
@@ -27,10 +29,28 @@ export default function Series() {
         {series.map((s, i) => (
           <div key={s.id || i} className="series-card fade-up" style={{ animationDelay: `${i * 0.04}s` }}>
             <div className="series-card-name">{s.name}</div>
+
             <div className="series-card-meta">
-              {s.startDate && <span>{new Date(s.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>}
-              {s.endDate && <span>→ {new Date(s.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
+              {s.startDate && (
+                <span>
+                  {new Date(s.startDate).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short'
+                  })}
+                </span>
+              )}
+
+              {s.endDate && (
+                <span>
+                  → {new Date(s.endDate).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  })}
+                </span>
+              )}
             </div>
+
             {s.odi || s.t20 || s.test ? (
               <div className="series-card-formats">
                 {s.test > 0 && <span className="format-tag test">TEST {s.test}</span>}
