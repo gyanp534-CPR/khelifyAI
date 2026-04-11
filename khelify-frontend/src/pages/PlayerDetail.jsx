@@ -110,12 +110,4 @@ function PlayerSkeleton() {
   );
 }
 
-if (!matchData?.match) {
-  return (
-    <div className="match-error">
-      <div className="me-icon">⚠</div>
-      <div className="me-text">Match data unavailable</div>
-      <Link to="/" className="me-back">← Back</Link>
-    </div>
-  );
-}
+
