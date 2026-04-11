@@ -1,22 +1,51 @@
 // ===============================
-// 🧠 AI ENGINE V3
+// 🧠 AI ENGINE V3 (STABLE)
 // ===============================
+
+// -------------------------------
+// 🔧 SAFE SCORE PARSER
+// -------------------------------
+function parseScore(scoreArr) {
+  try {
+    if (!Array.isArray(scoreArr) || scoreArr.length === 0) return null;
+
+    const first = scoreArr[0];
+
+    // Case 1: string → "212/2"
+    if (typeof first === 'string') {
+      const parts = first.split('/');
+      return {
+        runs: Number(parts[0]) || 0,
+        wickets: Number(parts[1]) || 0,
+      };
+    }
+
+    // Case 2: object → { r: 212, w: 2 }
+    if (typeof first === 'object') {
+      return {
+        runs: Number(first.r) || 0,
+        wickets: Number(first.w) || 0,
+      };
+    }
+
+    return null;
+
+  } catch (e) {
+    return null;
+  }
+}
 
 // -------------------------------
 // 1️⃣ WIN PROBABILITY
 // -------------------------------
 function calculateWinProbability(match) {
   try {
-    const score = match.score || [];
+    const parsed = parseScore(match.score);
 
-    if (!score.length) return null;
+    if (!parsed) return null;
 
-    const raw = score[0] || "";
-    const [runs, wickets] = raw.split('/').map(Number);
+    const { runs, wickets } = parsed;
 
-    if (!runs) return null;
-
-    // Simple heuristic model
     let probability = 50;
 
     if (runs > 180) probability += 25;
@@ -27,7 +56,8 @@ function calculateWinProbability(match) {
     if (wickets >= 8) probability -= 25;
 
     return Math.max(5, Math.min(95, probability));
-  } catch (err) {
+
+  } catch {
     return null;
   }
 }
@@ -36,33 +66,42 @@ function calculateWinProbability(match) {
 // 2️⃣ MOMENTUM ENGINE
 // -------------------------------
 function calculateMomentum(match) {
-  const score = JSON.stringify(match.score || "");
+  try {
+    const parsed = parseScore(match.score);
 
-  if (!score) return "neutral";
+    if (!parsed) return "neutral";
 
-  if (score.includes('/0') || score.includes('/1')) return "batting-strong";
-  if (score.includes('/5') || score.includes('/6')) return "bowling-dominant";
+    const { wickets } = parsed;
 
-  return "balanced";
+    if (wickets <= 1) return "batting-strong";
+    if (wickets >= 5) return "bowling-dominant";
+
+    return "balanced";
+
+  } catch {
+    return "neutral";
+  }
 }
 
 // -------------------------------
-// 3️⃣ PLAYER IMPACT (BASIC)
+// 3️⃣ PLAYER IMPACT
 // -------------------------------
 function estimatePlayerImpact(match) {
-  const score = match.score || [];
+  try {
+    const parsed = parseScore(match.score);
 
-  if (!score.length) return null;
+    if (!parsed) return null;
 
-  const raw = score[0] || "";
-  const [runs, wickets] = raw.split('/').map(Number);
+    const { runs, wickets } = parsed;
 
-  let impact = "average";
+    if (runs > 180) return "batting-dominant";
+    if (wickets >= 5) return "bowling-dominant";
 
-  if (runs > 180) impact = "batting-dominant";
-  if (wickets >= 5) impact = "bowling-dominant";
+    return "average";
 
-  return impact;
+  } catch {
+    return null;
+  }
 }
 
 // -------------------------------
@@ -71,23 +110,29 @@ function estimatePlayerImpact(match) {
 function generateInsights(match) {
   const insights = [];
 
-  const status = (match.status || "").toLowerCase();
-  const score = JSON.stringify(match.score || "");
+  try {
+    const status = (match.status || "").toLowerCase();
+    const parsed = parseScore(match.score);
 
-  if (status.includes('live')) {
-    insights.push("🔥 Match is live");
-  }
+    if (status.includes('live')) {
+      insights.push("🔥 Match is live");
+    }
 
-  if (score.includes('/0') || score.includes('/1')) {
-    insights.push("⚡ Strong opening start");
-  }
+    if (!parsed) {
+      insights.push("⏳ Match yet to start");
+      return insights;
+    }
 
-  if (score.includes('/5') || score.includes('/6')) {
-    insights.push("💥 Pressure on batting side");
-  }
+    if (parsed.wickets <= 1) {
+      insights.push("⚡ Strong opening start");
+    }
 
-  if (!match.score || match.score.length === 0) {
-    insights.push("⏳ Match yet to start");
+    if (parsed.wickets >= 5) {
+      insights.push("💥 Batting under pressure");
+    }
+
+  } catch {
+    insights.push("⚠ Unable to analyze match");
   }
 
   return insights;
@@ -97,13 +142,18 @@ function generateInsights(match) {
 // 🔥 MAIN AI PIPELINE
 // -------------------------------
 function enrichMatch(match) {
-  return {
-    ...match,
-    winProbability: calculateWinProbability(match),
-    momentum: calculateMomentum(match),
-    playerImpact: estimatePlayerImpact(match),
-    insights: generateInsights(match),
-  };
+  try {
+    return {
+      ...match,
+      winProbability: calculateWinProbability(match),
+      momentum: calculateMomentum(match),
+      playerImpact: estimatePlayerImpact(match),
+      insights: generateInsights(match),
+    };
+  } catch (e) {
+    console.warn('[AI] Failed to enrich match:', match?.id);
+    return match; // NEVER break API
+  }
 }
 
 // -------------------------------
