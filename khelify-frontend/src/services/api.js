@@ -17,8 +17,6 @@ api.interceptors.response.use(
 
 export const cricketApi = {
   getLive:       ()              => api.get('/cricket/live'),
-  getMatch:      (id)            => api.get(`/cricket/match/${id}`),
-  getAnalysis:   (id)            => api.get(`/cricket/analysis/${id}`),
   getSeries:     ()              => api.get('/cricket/series'),
   getPlayer:     (id)            => api.get(`/cricket/player/${id}`),
   searchPlayers: (q)             => api.get(`/cricket/player/search?q=${encodeURIComponent(q)}`),
