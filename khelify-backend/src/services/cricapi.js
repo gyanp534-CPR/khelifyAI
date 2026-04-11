@@ -98,13 +98,12 @@ async function fetchWithCache(cacheType, cacheKey, endpoint, params = {}) {
 }
 
 // ===============================
-// 🔥 MAIN ENGINE (MERGE + AI)
+// 🔥 MAIN ENGINE (SAFE VERSION)
 // ===============================
 async function getCurrentMatches() {
   let cricMatches = [];
-  let espnMatches = [];
 
-  // 1️⃣ CricAPI
+  // 1️⃣ CricAPI ONLY (disable ESPN for stability)
   try {
     const cricData = await fetchWithCache(
       'liveScores',
@@ -122,55 +121,26 @@ async function getCurrentMatches() {
     console.warn('[ENGINE] CricAPI failed');
   }
 
-  // 2️⃣ ESPN
+  let matches = cricMatches;
+
+  // ===============================
+  // 🧠 SAFE AI ENGINE (NO CRASH)
+  // ===============================
   try {
-    const espnData = await fetchESPNMatches();
-
-    if (espnData.length > 0) {
-      espnMatches = espnData
-        .map(m => normalizeMatch(m, 'espn'))
-        .filter(Boolean);
-    }
-  } catch (e) {
-    console.warn('[ENGINE] ESPN failed');
-  }
-
-  // ===============================
-  // 🔥 MERGE + DEDUPE
-  // ===============================
-  const mergedMap = new Map();
-
-  function getKey(match) {
-    return (match.teams || [])
-      .join('-')
-      .toLowerCase()
-      .replace(/\s/g, '');
-  }
-
-  [...cricMatches, ...espnMatches].forEach(match => {
-    const key = getKey(match);
-
-    if (!mergedMap.has(key)) {
-      mergedMap.set(key, match);
-    } else {
-      const existing = mergedMap.get(key);
-
-      // Prefer CricAPI over ESPN
-      if (existing.source === 'espn' && match.source === 'cricapi') {
-        mergedMap.set(key, match);
+    matches = matches.map(match => {
+      try {
+        return enrichMatch(match);
+      } catch (e) {
+        console.warn('[AI] Failed for match:', match.id);
+        return match; // fallback
       }
-    }
-  });
-
-  let matches = Array.from(mergedMap.values());
-
-  // ===============================
-  // 🧠 AI ENGINE APPLY
-  // ===============================
-  matches = matches.map(match => enrichMatch(match));
+    });
+  } catch (e) {
+    console.warn('[AI] Global failure, skipping AI layer');
+  }
 
   // ===============================
-  // CACHE FINAL
+  // CACHE
   // ===============================
   cache.set('liveScores', 'normalized_matches', matches);
 
