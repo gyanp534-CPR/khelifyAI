@@ -43,9 +43,9 @@ export default function MatchDetail() {
           <ScoreHero match={match} />
 
           <AIInsights
-            analysis={null}
-            loading={false}
-          />
+  ai={match.ai}
+  loading={false}
+/>
 
           <Scorecard
             scorecard={matchData?.scorecard}
