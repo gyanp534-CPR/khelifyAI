@@ -1,6 +1,7 @@
 const axios = require('axios');
 const cache = require('./cache');
-const { enrichMatch } = require('../engine/aiEngine');
+const { aiEngineV4 } = require('../engine/aiEngineV4');
+const { parseScore } = require('../utils/scoreParser');
 
 const BASE = process.env.CRICAPI_BASE;
 const KEY  = process.env.CRICAPI_KEY;
@@ -127,14 +128,28 @@ async function getCurrentMatches() {
   // 🧠 SAFE AI ENGINE (NO CRASH)
   // ===============================
   try {
-    matches = matches.map(match => {
-      try {
-        return enrichMatch(match);
-      } catch (e) {
-        console.warn('[AI] Failed for match:', match.id);
-        return match; // fallback
-      }
+   matches = matches.map(match => {
+  try {
+    const scoreA = parseScore(match.score?.[0]);
+    const scoreB = parseScore(match.score?.[1]);
+
+    const ai = aiEngineV4({
+      teamA: match.teams?.[0],
+      teamB: match.teams?.[1],
+      scoreA,
+      scoreB,
+      totalOvers: match.matchType === 't20' ? 20 : 50,
     });
+
+    return {
+      ...match,
+      ai,
+    };
+  } catch (e) {
+    console.warn('[AI V4] Failed for match:', match.id);
+    return match;
+  }
+});
   } catch (e) {
     console.warn('[AI] Global failure, skipping AI layer');
   }
