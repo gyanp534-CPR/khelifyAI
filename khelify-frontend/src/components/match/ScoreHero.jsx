@@ -94,6 +94,17 @@ export default function ScoreHero({ match }) {
       {!live && status && (
         <div className="sh-result">{status}</div>
       )}
+
+      
+{match?.ai?.winProbability && (
+  <div className="win-bar">
+    <div
+      className="win-fill"
+      style={{ width: `${match.ai.winProbability}%` }}
+    />
+  </div>
+)}
+      
     </div>
   );
 }
