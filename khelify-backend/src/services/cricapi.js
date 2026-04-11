@@ -24,7 +24,7 @@ async function fetchESPNMatches() {
     );
     return res.data.events || [];
   } catch (err) {
-    console.error('[ESPN] Failed:', err.message);
+    console.warn('[ESPN] Disabled (network blocked)');
     return [];
   }
 }
