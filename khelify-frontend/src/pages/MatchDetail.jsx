@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { useMatch, useAnalysis, useMatchVideos } from '../hooks/useData';
+import { useMatch } from '../hooks/useData';
 import ScoreHero from '../components/match/ScoreHero';
 import AIInsights from '../components/match/AIInsights';
 import VideoFeed from '../components/video/VideoFeed';
