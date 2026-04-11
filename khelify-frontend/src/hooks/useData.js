@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { cricketApi, systemApi } from '../services/api';
+import { useLiveMatches } from './useData';
 
 // Live matches - refetch every 60s
 export function useLiveMatches() {
@@ -13,14 +14,18 @@ export function useLiveMatches() {
 }
 
 // Single match detail
+
+
 export function useMatch(id) {
-  return useQuery({
-    queryKey: ['match', id],
-    queryFn:  () => cricketApi.getMatch(id),
-    enabled:  !!id,
-    refetchInterval: 60_000,
-    staleTime: 55_000,
-  });
+  const { data: matches = [] } = useLiveMatches();
+
+  return {
+    data: {
+      match: matches.find(m => m.id === id)
+    },
+    isLoading: false,
+    isError: false
+  };
 }
 
 // Rule-engine analysis for a match
