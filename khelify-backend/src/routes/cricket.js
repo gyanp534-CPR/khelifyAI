@@ -3,11 +3,21 @@ const router = express.Router();
 const cricapi = require('../services/cricapi');
 
 // ===============================
-// LIVE MATCHES (MAIN ENDPOINT)
+// LIVE MATCHES
 // ===============================
 router.get('/live', async (req, res) => {
   try {
     const matches = await cricapi.getCurrentMatches();
+
+    // ✅ SAFETY: always return array
+    if (!Array.isArray(matches)) {
+      console.warn('[ROUTE] Invalid matches format');
+      return res.json({
+        success: true,
+        count: 0,
+        matches: []
+      });
+    }
 
     return res.json({
       success: true,
@@ -18,7 +28,7 @@ router.get('/live', async (req, res) => {
   } catch (err) {
     console.error('[ROUTE] Live error:', err.message);
 
-    return res.json({
+    return res.status(500).json({
       success: false,
       matches: [],
       message: 'Failed to fetch matches'
@@ -27,7 +37,7 @@ router.get('/live', async (req, res) => {
 });
 
 // ===============================
-// HEALTH CHECK (optional but useful)
+// HEALTH
 // ===============================
 router.get('/health', (req, res) => {
   res.json({
