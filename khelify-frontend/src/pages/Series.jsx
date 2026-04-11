@@ -1,4 +1,3 @@
-import { useSeries } from '../hooks/useData';
 import { Link } from 'react-router-dom';
 import './Series.css';
 
