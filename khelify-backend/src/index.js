@@ -11,10 +11,12 @@ const PORT = process.env.PORT || 3000;
 
 // ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://khelify.vercel.app', 'https://khelify.ai'] // update with your actual domain
-    : '*',
+  origin: [
+    'https://khelify-ai.vercel.app',   // ✅ your actual frontend
+    'http://localhost:5173'            // optional (for local dev)
+  ],
   methods: ['GET', 'POST', 'DELETE'],
+  credentials: true
 }));
 app.use(express.json());
 app.use(generalLimiter);
