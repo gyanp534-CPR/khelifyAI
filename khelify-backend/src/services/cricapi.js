@@ -1,5 +1,6 @@
 const axios = require('axios');
 const cache = require('./cache');
+const { enrichMatch } = require('../engine/aiEngine');
 
 const BASE = process.env.CRICAPI_BASE;
 const KEY  = process.env.CRICAPI_KEY;
@@ -14,14 +15,13 @@ const api = axios.create({
 });
 
 // ===============================
-// ESPN FETCH (FALLBACK + MERGE)
+// ESPN FETCH
 // ===============================
 async function fetchESPNMatches() {
   try {
     const res = await axios.get(
       'https://site.api.espncricinfo.com/apis/site/v2/sports/cricket/matches/live'
     );
-
     return res.data.events || [];
   } catch (err) {
     console.error('[ESPN] Failed:', err.message);
@@ -98,48 +98,13 @@ async function fetchWithCache(cacheType, cacheKey, endpoint, params = {}) {
 }
 
 // ===============================
-// 🧠 AI INSIGHTS ENGINE
-// ===============================
-function generateInsights(match) {
-  const insights = [];
-
-  const status = (match.status || '').toLowerCase();
-  const score = JSON.stringify(match.score || '');
-
-  if (status.includes('live')) {
-    insights.push('🔥 Match is live');
-  }
-
-  if (score.includes('/0') || score.includes('/1')) {
-    insights.push('⚡ Strong start by batting side');
-  }
-
-  if (score.includes('/5') || score.includes('/6')) {
-    insights.push('💥 Middle order under pressure');
-  }
-
-  if (!match.score || match.score.length === 0) {
-    insights.push('⏳ Match yet to start');
-  }
-
-  return insights;
-}
-
-// ===============================
-// 📊 CONFIDENCE SCORE
-// ===============================
-function generateConfidence(match) {
-  return match.source === 'cricapi' ? 0.9 : 0.7;
-}
-
-// ===============================
-// 🔥 CORE ENGINE (MERGE + DEDUPE)
+// 🔥 MAIN ENGINE (MERGE + AI)
 // ===============================
 async function getCurrentMatches() {
   let cricMatches = [];
   let espnMatches = [];
 
-  // 1️⃣ Fetch CricAPI
+  // 1️⃣ CricAPI
   try {
     const cricData = await fetchWithCache(
       'liveScores',
@@ -149,29 +114,29 @@ async function getCurrentMatches() {
     );
 
     if (cricData?.data?.length > 0) {
-      cricMatches = cricData.data.map(m =>
-        normalizeMatch(m, 'cricapi')
-      );
+      cricMatches = cricData.data
+        .map(m => normalizeMatch(m, 'cricapi'))
+        .filter(Boolean);
     }
   } catch (e) {
     console.warn('[ENGINE] CricAPI failed');
   }
 
-  // 2️⃣ Fetch ESPN
+  // 2️⃣ ESPN
   try {
     const espnData = await fetchESPNMatches();
 
     if (espnData.length > 0) {
-      espnMatches = espnData.map(m =>
-        normalizeMatch(m, 'espn')
-      );
+      espnMatches = espnData
+        .map(m => normalizeMatch(m, 'espn'))
+        .filter(Boolean);
     }
   } catch (e) {
     console.warn('[ENGINE] ESPN failed');
   }
 
   // ===============================
-  // 🔥 MERGE + DEDUPLICATION
+  // 🔥 MERGE + DEDUPE
   // ===============================
   const mergedMap = new Map();
 
@@ -183,8 +148,6 @@ async function getCurrentMatches() {
   }
 
   [...cricMatches, ...espnMatches].forEach(match => {
-    if (!match) return;
-
     const key = getKey(match);
 
     if (!mergedMap.has(key)) {
@@ -192,30 +155,26 @@ async function getCurrentMatches() {
     } else {
       const existing = mergedMap.get(key);
 
-      // Prefer CricAPI data
+      // Prefer CricAPI over ESPN
       if (existing.source === 'espn' && match.source === 'cricapi') {
         mergedMap.set(key, match);
       }
     }
   });
 
-  let finalMatches = Array.from(mergedMap.values());
+  let matches = Array.from(mergedMap.values());
 
   // ===============================
-  // 🧠 ADD AI LAYER
+  // 🧠 AI ENGINE APPLY
   // ===============================
-  finalMatches = finalMatches.map(match => ({
-    ...match,
-    insights: generateInsights(match),
-    confidence: generateConfidence(match)
-  }));
+  matches = matches.map(match => enrichMatch(match));
 
   // ===============================
-  // CACHE FINAL RESULT
+  // CACHE FINAL
   // ===============================
-  cache.set('liveScores', 'normalized_matches', finalMatches);
+  cache.set('liveScores', 'normalized_matches', matches);
 
-  return finalMatches;
+  return matches;
 }
 
 // ===============================
