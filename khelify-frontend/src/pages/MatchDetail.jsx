@@ -15,6 +15,16 @@ const isError = !matchData?.match;
   const analysisData = null;
 const analysisLoading = false;
 
+  if (!matchData?.match) {
+  return (
+    <div className="match-error">
+      <div className="me-icon">⚠</div>
+      <div className="me-text">Match data unavailable</div>
+      <Link to="/" className="me-back">← Back</Link>
+    </div>
+  );
+}
+
   const match   = matchData?.match;
   const team1   = match?.teamInfo?.[0]?.name || match?.teams?.[0] || '';
   const team2   = match?.teamInfo?.[1]?.name || match?.teams?.[1] || '';
