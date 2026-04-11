@@ -2,8 +2,12 @@ services:
   - type: web
     name: khelify-backend
     env: node
+
+    rootDir: khelify-backend   # 👈 THIS IS THE MAGIC LINE
+
     buildCommand: npm install
     startCommand: npm start
+
     envVars:
       - key: NODE_ENV
         value: production
@@ -11,11 +15,3 @@ services:
         sync: false
       - key: YOUTUBE_KEY
         sync: false
-      - key: LIVE_SCORE_CACHE_TTL
-        value: 60
-      - key: MATCH_INFO_CACHE_TTL
-        value: 300
-      - key: YOUTUBE_CACHE_TTL
-        value: 1800
-      - key: PLAYER_CACHE_TTL
-        value: 3600
