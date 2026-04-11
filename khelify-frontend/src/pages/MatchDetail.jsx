@@ -4,91 +4,88 @@ import ScoreHero from '../components/match/ScoreHero';
 import AIInsights from '../components/match/AIInsights';
 import VideoFeed from '../components/video/VideoFeed';
 import Scorecard from '../components/match/Scorecard';
-import { getTeamShort } from '../utils/cricket';
 import './MatchDetail.css';
 
 export default function MatchDetail() {
   const { id } = useParams();
-  const { data: matchData } = useMatch(id);
-const matchLoading = false;
-const isError = !matchData?.match;
-  const analysisData = null;
-const analysisLoading = false;
 
-  if (!matchData?.match) {
-  return (
-    <div className="match-error">
-      <div className="me-icon">⚠</div>
-      <div className="me-text">Match data unavailable</div>
-      <Link to="/" className="me-back">← Back</Link>
-    </div>
-  );
-}
+  const { data: matchData, isLoading, isError } = useMatch(id);
 
-  const match   = matchData?.match;
-  const team1   = match?.teamInfo?.[0]?.name || match?.teams?.[0] || '';
-  const team2   = match?.teamInfo?.[1]?.name || match?.teams?.[1] || '';
-  const tournament = match?.series_id || '';
+  // 🚫 REMOVE broken video hook
+  const videos = [];
+  const videosLoading = false;
 
-  const { data: videos, isLoading: videosLoading } = useMatchVideos(team1, team2, tournament);
+  if (isLoading) {
+    return <div className="match-error">Loading match...</div>;
+  }
 
-  if (isError) {
+  if (isError || !matchData?.match) {
     return (
       <div className="match-error">
         <div className="me-icon">⚠</div>
-        <div className="me-text">Could not load match. It may have ended or the ID is invalid.</div>
+        <div className="me-text">
+          Could not load match. It may have ended or the ID is invalid.
+        </div>
         <Link to="/" className="me-back">← Back to matches</Link>
       </div>
     );
   }
 
+  const match = matchData.match;
+
   return (
     <div className="match-detail fade-up">
-      {/* Back nav */}
       <Link to="/" className="md-back">← All matches</Link>
 
-      {/* Main 2-col layout */}
       <div className="md-layout">
-        {/* Left column - score + analysis */}
+        {/* LEFT */}
         <div className="md-main">
           <ScoreHero match={match} />
 
           <AIInsights
-            analysis={analysisData}
-            loading={analysisLoading && !analysisData}
+            analysis={null}
+            loading={false}
           />
 
           <Scorecard
             scorecard={matchData?.scorecard}
-            loading={matchLoading}
+            loading={false}
           />
         </div>
 
-        {/* Right column - videos */}
+        {/* RIGHT */}
         <div className="md-side">
           <VideoFeed
-            videos={matchData?.videos || videos}
-            loading={videosLoading && !matchData?.videos}
+            videos={videos}
+            loading={videosLoading}
           />
 
-          {/* Match meta card */}
           {match && (
             <div className="md-meta-card">
               <div className="md-meta-title">Match Info</div>
+
               <div className="md-meta-row">
                 <span>Format</span>
                 <span>{(match.matchType || 'ODI').toUpperCase()}</span>
               </div>
+
               {match.venue && (
                 <div className="md-meta-row">
                   <span>Venue</span>
                   <span>{match.venue}</span>
                 </div>
               )}
+
               {match.date && (
                 <div className="md-meta-row">
                   <span>Date</span>
-                  <span>{new Date(match.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                  <span>
+                    {new Date(match.date).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric'
+                    })}
+                  </span>
                 </div>
               )}
             </div>
