@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { cricketApi, systemApi } from '../services/api';
-import { useLiveMatches } from './useData';
+
 
 // Live matches - refetch every 60s
 export function useLiveMatches() {
