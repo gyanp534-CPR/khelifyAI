@@ -9,8 +9,11 @@ import './MatchDetail.css';
 
 export default function MatchDetail() {
   const { id } = useParams();
-  const { data: matchData, isLoading: matchLoading, isError } = useMatch(id);
-  const { data: analysisData, isLoading: analysisLoading } = useAnalysis(id);
+  const { data: matchData } = useMatch(id);
+const matchLoading = false;
+const isError = !matchData?.match;
+  const analysisData = null;
+const analysisLoading = false;
 
   const match   = matchData?.match;
   const team1   = match?.teamInfo?.[0]?.name || match?.teams?.[0] || '';
