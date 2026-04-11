@@ -1,10 +1,10 @@
 require('dotenv').config();
 const express = require('express');
 const cors    = require('cors');
-const { generalLimiter, refreshLimiter } = require('../middleware/rateLimiter');
+const { generalLimiter, refreshLimiter } = require('./middleware/rateLimiter');
 
-const cricketRoutes = require('../routes/cricket');
-const systemRoutes  = require('../routes/system');
+const cricketRoutes = require('./routes/cricket');
+const systemRoutes  = require('./routes/system');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -64,4 +64,4 @@ app.listen(PORT, () => {
   console.log(`\n   API root: http://localhost:${PORT}/\n`);
 });
 
-module.exports = app; 
+module.exports = app;
