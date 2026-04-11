@@ -1,11 +1,9 @@
 import { getInsightColor, getInsightBg, getWinProbColor } from '../../utils/cricket';
 import './AIInsights.css';
 
-export default function AIInsights({ analysis, loading }) {
+export default function AIInsights({ ai, loading }) {
   if (loading) return <InsightsSkeleton />;
-  if (!analysis) return null;
-
-  const { insights = [], turningPoint, narrative, winProbability } = analysis;
+ if (!ai) return null;
 
   return (
     <div className="ai-insights fade-up fade-up-2">
@@ -110,10 +108,18 @@ function insightIcon(type) {
 function InsightsSkeleton() {
   return (
     <div className="ai-insights">
-      <div className="skeleton" style={{ height: 20, width: '60%', marginBottom: 12 }} />
-      <div className="skeleton" style={{ height: 60, marginBottom: 8 }} />
-      <div className="skeleton" style={{ height: 50, marginBottom: 8 }} />
-      <div className="skeleton" style={{ height: 50 }} />
-    </div>
+  <p><strong>Win Probability:</strong> {ai.winProbability}%</p>
+  <p><strong>Phase:</strong> {ai.phase}</p>
+  <p><strong>Momentum:</strong> {ai.momentum}</p>
+  <p><strong>CRR:</strong> {ai.currentRunRate}</p>
+  {ai.requiredRunRate && (
+    <p><strong>RRR:</strong> {ai.requiredRunRate}</p>
+  )}
+  <p><strong>Insight:</strong> {ai.insight}</p>
+  <p><strong>Commentary:</strong> {ai.commentary}</p>
+  {ai.turningPoint && (
+    <p><strong>Turning Point:</strong> {ai.turningPoint}</p>
+  )}
+</div>
   );
 }
